@@ -4,11 +4,23 @@
     {
         void Write(string message);
     }
+    public interface IConsole
+    {
+    }
     public class ConsoleLog :ILog
     {
         public void Write(string message)
         {
             Console.WriteLine(message);
+        }
+    }
+
+    public class EmailLog : ILog,IConsole
+    {
+        private const string adminEmail = "admin@foo.com";
+        public void Write(string message)
+        {
+            Console.WriteLine($"Email sent to {adminEmail} : {message}");
         }
     }
     public class Engine
@@ -49,9 +61,17 @@
     {
         public static void Main(string[] args)
         {
-            var log = new ConsoleLog();
-            var engine = new Engine(log);
-            var car = new Car(engine, log);
+            var builder = new ContainerBuilder();
+            builder.RegisterType<EmailLog>()
+                .As<ILog>()
+                .As<IConsole>();
+            builder.RegisterType<ConsoleLog>().As<ILog>().PreserveExistingDefaults();
+            builder.RegisterType<Engine>();
+            builder.RegisterType<Car>();
+            IContainer container = builder.Build();
+
+            var car = container.Resolve<Car>();
+
             car.Go();
         }
     }
