@@ -82,12 +82,38 @@ namespace Autofac.samples
             log.Write($"Car going forward...");
         }
     }
-    
+
+
+    public class Service
+    {
+        public string DoSomething(int value)
+        {
+            return $"I have {value}";
+        }
+    }
+
+    public class DomainObject
+    {
+        private Service service;
+        private int value;
+
+        public delegate DomainObject Factory(int value);
+        
+         public DomainObject(Service service, int value)
+         {
+             this.service = service ?? throw new ArgumentNullException(nameof(service));
+             this.value = value;
+         }
+         public override string ToString()
+         {
+             return service.DoSomething(value);
+         }
+    }
     internal class Program
     {
         public static void Main(string[] args)
         {
-            var builder = new ContainerBuilder();
+            // var builder = new ContainerBuilder();
             // named parameter
             // builder.RegisterType<SMSLog>()
             //     .As<ILog>()
@@ -113,21 +139,33 @@ namespace Autofac.samples
             // var container = builder.Build();
             // var log = container.Resolve<ILog>();
             // log.Write($"test message");
-
-
-            Random random = new Random();
-
-            builder.Register
-            ((c, p)
-                => new SMSLog(p.Named<string>($"phoneNumber")))
-                .As<ILog>();
             
-            Console.WriteLine($"about to build container...");
-            var container = builder.Build();
 
-            var log = container.Resolve<ILog>
-                (new NamedParameter($"phoneNumber", random.Next().ToString()));
-            log.Write($"testing");
+            // var builder = new ContainerBuilder();
+            // Random random = new Random();
+            // builder.Register
+            // ((c, p)
+            //     => new SMSLog(p.Named<string>($"phoneNumber")))
+            //     .As<ILog>();
+            // Console.WriteLine($"about to build container...");
+            // var container = builder.Build();
+            // var log = container.Resolve<ILog>
+            //     (new NamedParameter($"phoneNumber", random.Next().ToString()));
+            // log.Write($"testing");
+
+            
+            // // Delegate factory
+            // var cb = new ContainerBuilder();
+            // cb.RegisterType<Service>();
+            // cb.RegisterType<DomainObject>();
+            // var container = cb.Build();
+            // var dobj = container.Resolve<DomainObject>(
+            //     new PositionalParameter(1, 42));
+            // Console.WriteLine(dobj);
+            // var factory = container.Resolve<DomainObject.Factory>();
+            // var dobj2 = factory(42);
+            // Console.WriteLine(dobj2);
+
         }
     }
 }
