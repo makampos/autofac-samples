@@ -16,7 +16,6 @@ namespace Autofac.samples
             Console.WriteLine(message);
         }
     }
-
     public class EmailLog : ILog,IConsole
     {
         private const string adminEmail = "admin@foo.com";
@@ -47,7 +46,6 @@ namespace Autofac.samples
             log.Write($"Engine[{id}] ahead {power}");
         }
     }
-
     public class SMSLog : ILog
     {
         private string phoneNumber;
@@ -82,8 +80,6 @@ namespace Autofac.samples
             log.Write($"Car going forward...");
         }
     }
-
-
     public class Service
     {
         public string DoSomething(int value)
@@ -140,6 +136,24 @@ namespace Autofac.samples
         {
             var entity = entityFactory();
             Console.WriteLine(entity);
+        }
+    }
+
+    public class Parent
+    {
+        public override string ToString()
+        {
+            return $"I'm your father";
+        }
+    }
+
+    public class Child
+    {
+        public string Name { get; set; }
+        public Parent Parent { get; set; }
+        public void SetParent(Parent parent)
+        {
+            Parent = parent;
         }
     }
     internal class Program
@@ -199,16 +213,39 @@ namespace Autofac.samples
             // var dobj2 = factory(42);
             // Console.WriteLine(dobj2);
 
-            var cb = new ContainerBuilder();
-            cb.RegisterType<Entity>().InstancePerDependency();
-            cb.RegisterType<ViewModel>();
-
-            var container = cb.Build();
-            var vm = container.Resolve<ViewModel>();
             
-            vm.Method();
-            vm.Method();
+            //  // Object on demand
+            // var cb = new ContainerBuilder();
+            // cb.RegisterType<Entity>().InstancePerDependency();
+            // cb.RegisterType<ViewModel>();
+            // var container = cb.Build();
+            // var vm = container.Resolve<ViewModel>();
+            // vm.Method();
+            // vm.Method();
 
+            var builder = new ContainerBuilder();
+            builder.RegisterType<Parent>();
+            // builder.RegisterType<Child>().PropertiesAutowired();
+            // builder.RegisterType<Child>()
+            //     .WithProperty($"Parent", new Parent());
+
+            // builder.Register(c =>
+            // {
+            //     var child = new Child();
+            //     child.SetParent(c.Resolve<Parent>());
+            //     return child;
+            // });
+            
+            builder.RegisterType<Child>()
+                .OnActivated(e =>
+                {
+                    var parent = e.Context.Resolve<Parent>();
+                    e.Instance.SetParent(parent);
+                });
+            
+            var container = builder.Build();
+            var parent = container.Resolve<Child>().Parent;
+            Console.WriteLine(parent);
         }
     }
 }
