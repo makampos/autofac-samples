@@ -157,6 +157,14 @@ namespace Autofac.samples
             Parent = parent;
         }
     }
+    public class ParenChildModule : Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            builder.RegisterType<Parent>();
+            builder.Register(c => new Child() { Parent = c.Resolve<Parent>() });
+        }
+    }
     internal class Program
     {
         public static void Main(string[] args)
@@ -251,19 +259,28 @@ namespace Autofac.samples
             
             
             // // Scanning for Types
-            var assembly = Assembly.GetExecutingAssembly();
+            // var assembly = Assembly.GetExecutingAssembly();
+            // var builder = new ContainerBuilder();
+            // builder.RegisterAssemblyTypes(assembly)
+            //     .Where(t => t.Name.EndsWith("Log"))
+            //     .Except<SMSLog>()
+            //     .Except<ConsoleLog>(c => c.As<ILog>()
+            //         .SingleInstance())
+            //     .AsSelf();
+            //
+            // builder.RegisterAssemblyTypes(assembly)
+            //     .Except<SMSLog>()
+            //     .Where(t => t.Name.EndsWith("Log"))
+            //     .As(t => t.GetInterfaces()[0]);
+            
+            // // Scanning for Modules
             var builder = new ContainerBuilder();
-            builder.RegisterAssemblyTypes(assembly)
-                .Where(t => t.Name.EndsWith("Log"))
-                .Except<SMSLog>()
-                .Except<ConsoleLog>(c => c.As<ILog>()
-                    .SingleInstance())
-                .AsSelf();
-
-            builder.RegisterAssemblyTypes(assembly)
-                .Except<SMSLog>()
-                .Where(t => t.Name.EndsWith("Log"))
-                .As(t => t.GetInterfaces()[0]);
+            // both options
+            // builder.RegisterAssemblyModules(typeof(Program).Assembly);
+            builder.RegisterAssemblyModules<ParenChildModule>(typeof(Program).Assembly);
+            
+            var container = builder.Build();
+            Console.WriteLine(container.Resolve<Child>().Parent);
         }
     }
 }
