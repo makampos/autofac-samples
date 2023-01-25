@@ -1,4 +1,5 @@
-﻿using Autofac.Core;
+﻿using System.Reflection;
+using Autofac.Core;
 
 namespace Autofac.samples
 {
@@ -222,30 +223,47 @@ namespace Autofac.samples
             // var vm = container.Resolve<ViewModel>();
             // vm.Method();
             // vm.Method();
-
-            var builder = new ContainerBuilder();
-            builder.RegisterType<Parent>();
-            // builder.RegisterType<Child>().PropertiesAutowired();
+            
+            //  // Property and method injection 
+            // var builder = new ContainerBuilder();
+            // builder.RegisterType<Parent>();
+            // // builder.RegisterType<Child>().PropertiesAutowired();
+            // // builder.RegisterType<Child>()
+            // //     .WithProperty($"Parent", new Parent());
+            //
+            // // builder.Register(c =>
+            // // {
+            // //     var child = new Child();
+            // //     child.SetParent(c.Resolve<Parent>());
+            // //     return child;
+            // // });
+            //
             // builder.RegisterType<Child>()
-            //     .WithProperty($"Parent", new Parent());
+            //     .OnActivated(e =>
+            //     {
+            //         var parent = e.Context.Resolve<Parent>();
+            //         e.Instance.SetParent(parent);
+            //     });
+            //
+            // var container = builder.Build();
+            // var parent = container.Resolve<Child>().Parent;
+            // Console.WriteLine(parent);
+            
+            
+            // // Scanning for Types
+            var assembly = Assembly.GetExecutingAssembly();
+            var builder = new ContainerBuilder();
+            builder.RegisterAssemblyTypes(assembly)
+                .Where(t => t.Name.EndsWith("Log"))
+                .Except<SMSLog>()
+                .Except<ConsoleLog>(c => c.As<ILog>()
+                    .SingleInstance())
+                .AsSelf();
 
-            // builder.Register(c =>
-            // {
-            //     var child = new Child();
-            //     child.SetParent(c.Resolve<Parent>());
-            //     return child;
-            // });
-            
-            builder.RegisterType<Child>()
-                .OnActivated(e =>
-                {
-                    var parent = e.Context.Resolve<Parent>();
-                    e.Instance.SetParent(parent);
-                });
-            
-            var container = builder.Build();
-            var parent = container.Resolve<Child>().Parent;
-            Console.WriteLine(parent);
+            builder.RegisterAssemblyTypes(assembly)
+                .Except<SMSLog>()
+                .Where(t => t.Name.EndsWith("Log"))
+                .As(t => t.GetInterfaces()[0]);
         }
     }
 }
